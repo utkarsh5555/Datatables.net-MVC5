@@ -1,0 +1,44 @@
+[HttpPost]
+        public JsonResult UsersList(DataTableParameters param)
+        {
+            using (var Service = new CavanaghService())
+            {
+            var draw = param.draw;
+            int pageSize = param.length == -1 ? int.MaxValue : param.length;
+            int currentPage = param.length == -1 ? 1 : param.start / param.length + 1;
+            int recordsTotal = 0;
+            UserModel user = new UserModel();
+                foreach (var column in param.columns)
+                {
+                    if (!string.IsNullOrWhiteSpace(column.search.value))
+                    {
+                        switch (column.data.ToLower())
+                        {
+                            case "name":
+                                user.FirstName = column.search.value;
+                                user.LastName = column.search.value;
+                                break;
+                            case "username":
+                                user.UserName = column.search.value;
+                                break;
+                            case "ordercode":
+                                user.OrderCode = column.search.value;
+                                break;
+                            case "isactive":
+                                user.IsActive = Convert.ToBoolean(column.search.value);
+                                break;
+                            case "isloggedin":
+                                user.IsLoggedIn = Convert.ToBoolean(column.search.value);
+                                break;
+                            case "roleid":
+                                user.RoleId = Convert.ToInt32(column.search.value);
+                                break;
+                        }
+                    }
+                }
+                var userData = Service.GetUserList(user.ToEntity(), out ex, currentPage, pageSize, param.order[0].column, param.order[0].dir.ToLower() == "asc");
+              
+            return Json(new { draw = draw, recordsFiltered = userData.TotalCount, recordsTotal = userData.Items.Count, data = userData.Items.ToModelList() });
+
+            }
+        }
